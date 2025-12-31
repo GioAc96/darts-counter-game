@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Darts Sum Board</title>
+<style>
+:root {
+--bg: #02030a;
+--panel: #050816;
+--panel-alt: #050612;
+--line: #111827;
+--accent-green: #16a34a;
+--accent-red: #dc2626;
+--accent-yellow: #facc15;
+--text-main: #e5e7eb;
+--text-muted: #9ca3af;
+}
+
+* {
+box-sizing: border-box;
+}
+
+body {
+margin: 0;
+font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+background: radial-gradient(circle at top, #030712 0, #020617 40%, #02030a 100%);
+color: var(--text-main);
+-webkit-tap-highlight-color: transparent;
+}
+
+.app {
+max-width: 520px;
+margin: 0 auto;
+min-height: 100vh;
+display: flex;
+flex-direction: column;
+padding-bottom: 12px;
+}
+
+.top-header {
+padding: 16px 16px 10px;
+}
+.top-header-inner {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 10px;
+}
+
+.totals-block {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 4px;
+}
+
+.totals-row {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 4px;
+}
+
+.total-label {
+font-size: 11px;
+text-transform: uppercase;
+letter-spacing: 0.16em;
+color: var(--text-muted);
+}
+
+.total-display {
+min-width: 140px;
+padding: 8px 14px;
+border-radius: 12px;
+background: radial-gradient(circle at 0 0, rgba(250, 204, 21, 0.18), transparent 55%),
+#020617;
+border: 1px solid rgba(148, 163, 184, 0.5);
+box-shadow:
+0 0 18px rgba(250, 204, 21, 0.35),
+inset 0 0 10px rgba(0, 0, 0, 0.7);
+font-family: "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+font-size: 28px;
+text-align: center;
+color: #bbf7d0;
+}
+
+.throws-row {
+display: flex;
+align-items: baseline;
+gap: 6px;
+font-size: 13px;
+color: var(--text-muted);
+}
+.throws-label {
+text-transform: uppercase;
+letter-spacing: 0.16em;
+}
+.throws-value {
+font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+font-size: 14px;
+color: #e5e7eb;
+}
+
+.tabs {
+display: inline-flex;
+background: rgba(15, 23, 42, 0.9);
+border-radius: 999px;
+padding: 3px;
+box-shadow: 0 0 0 1px #111827;
+}
+.tab-btn {
+border: none;
+border-radius: 999px;
+padding: 4px 10px;
+font-size: 11px;
+text-transform: uppercase;
+letter-spacing: 0.14em;
+background: transparent;
+color: var(--text-muted);
+cursor: pointer;
+touch-action: manipulation;
+}
+.tab-btn.active {
+background: linear-gradient(135deg, #16a34a, #22c55e);
+color: #020617;
+font-weight: 600;
+box-shadow: 0 0 12px rgba(22, 163, 74, 0.7);
+}
+
+main {
+flex: 1;
+padding: 8px 14px 0;
+}
+
+.panel {
+background: radial-gradient(circle at top, #020617 0, #02030a 60%);
+border-radius: 18px;
+border: 1px solid rgba(15, 23, 42, 0.95);
+box-shadow:
+0 14px 40px rgba(0, 0, 0, 0.8),
+inset 0 0 0 1px rgba(148, 163, 184, 0.1);
+padding: 14px;
+position: relative;
+overflow: hidden;
+}
+.panel::before {
+content: "";
+position: absolute;
+inset: -40%;
+background:
+radial-gradient(circle at 10% 0, rgba(22, 163, 74, 0.09), transparent 55%),
+radial-gradient(circle at 100% 0, rgba(220, 38, 38, 0.12), transparent 60%);
+mix-blend-mode: screen;
+pointer-events: none;
+}
+
+.panel-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 8px;
+position: relative;
+z-index: 1;
+}
+
+.status-row {
+display: flex;
+flex-direction: column;
+gap: 4px;
+font-size: 12px;
+color: var(--text-muted);
+}
+.counter-line {
+display: flex;
+align-items: center;
+gap: 6px;
+}
+.counter {
+font-weight: 500;
+}
+.counter span {
+color: var(--accent-yellow);
+}
+
+.inputs-line {
+font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+font-size: 11px;
+color: #e5e7eb;
+padding: 4px 8px;
+border-radius: 999px;
+background: rgba(15, 23, 42, 0.85);
+border: 1px solid rgba(31, 41, 55, 0.9);
+max-width: 280px;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+
+.limit-indicator {
+font-size: 11px;
+padding: 2px 8px;
+border-radius: 999px;
+border: 1px solid #374151;
+text-transform: uppercase;
+letter-spacing: 0.16em;
+}
+.limit-ok {
+color: var(--accent-green);
+border-color: rgba(34, 197, 94, 0.7);
+box-shadow: 0 0 8px rgba(22, 163, 74, 0.4);
+}
+.limit-full {
+color: var(--accent-red);
+border-color: rgba(248, 113, 113, 0.8);
+box-shadow: 0 0 8px rgba(220, 38, 38, 0.7);
+}
+
+.board-wrapper {
+position: relative;
+margin-top: 10px;
+}
+
+.board-rings {
+position: absolute;
+inset: 8px;
+border-radius: 24px;
+border: 1px solid rgba(31, 41, 55, 0.8);
+pointer-events: none;
+background:
+radial-gradient(circle at center, transparent 0 36%, rgba(15, 23, 42, 0.9) 36% 40%, transparent 40% 100%),
+radial-gradient(circle at center, rgba(15, 23, 42, 0.4) 0 22%, transparent 22% 100%);
+opacity: 0.6;
+}
+
+.grid {
+display: grid;
+grid-template-columns: repeat(4, minmax(0, 1fr));
+gap: 14px;
+padding: 14px 4px 4px;
+position: relative;
+z-index: 1;
+}
+
+.num-btn,
+.ctrl-btn {
+position: relative;
+padding: 14px 0;
+border-radius: 999px;
+border: none;
+background: radial-gradient(circle at 50% 0, rgba(15, 23, 42, 0.6), #020617 55%);
+color: #f9fafb;
+font-size: 20px;
+font-weight: 700;
+cursor: pointer;
+box-shadow:
+0 0 0 1px #111827,
+inset 0 0 0 1px rgba(15, 23, 42, 0.9);
+transition:
+transform 0.07s ease,
+box-shadow 0.07s ease,
+background 0.07s ease,
+filter 0.07s ease;
+font-family: "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+touch-action: manipulation;
+}
+
+.num-btn::after,
+.ctrl-btn::after {
+content: "";
+position: absolute;
+inset: 3px;
+border-radius: inherit;
+border: 1px solid rgba(15, 23, 42, 0.9);
+opacity: 0.7;
+}
+
+.num-btn:nth-child(odd) {
+background: radial-gradient(circle at 50% 0, rgba(15, 23, 42, 0.7), #020617 55%),
+linear-gradient(135deg, #090814, #020617);
+}
+.num-btn:nth-child(even) {
+background: radial-gradient(circle at 50% 0, rgba(30, 64, 175, 0.6), #020617 60%),
+linear-gradient(135deg, #020617, #020714);
+}
+
+.ctrl-btn {
+background: radial-gradient(circle at 50% 0, rgba(220, 38, 38, 0.7), #020617 60%);
+box-shadow:
+0 0 0 1px rgba(127, 29, 29, 0.9),
+0 0 18px rgba(239, 68, 68, 0.55);
+font-size: 26px; /* simbolo più grande */
+}
+
+.num-btn:hover:not(.disabled),
+.ctrl-btn:hover:not(.disabled) {
+transform: translateY(-1px);
+filter: brightness(1.05);
+box-shadow:
+0 3px 16px rgba(0, 0, 0, 0.85),
+0 0 12px rgba(34, 197, 94, 0.45);
+}
+
+.num-btn:active:not(.disabled),
+.ctrl-btn:active:not(.disabled) {
+transform: translateY(1px);
+box-shadow:
+0 0 0 1px #0f172a,
+inset 0 0 10px rgba(0, 0, 0, 0.9);
+filter: brightness(0.96);
+}
+
+.num-btn.disabled,
+.ctrl-btn.disabled {
+opacity: 0.3;
+cursor: default;
+box-shadow: 0 0 0 1px #111827;
+filter: grayscale(50%);
+}
+
+.actions {
+display: flex;
+flex-direction: column;
+gap: 8px;
+margin-top: 10px;
+position: relative;
+z-index: 1;
+}
+
+.primary-btn,
+.secondary-btn,
+.danger-btn {
+border-radius: 999px;
+padding: 9px 14px;
+font-size: 12px;
+text-transform: uppercase;
+letter-spacing: 0.16em;
+border: none;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 6px;
+font-weight: 600;
+touch-action: manipulation;
+}
+
+.primary-btn {
+background: linear-gradient(135deg, #22c55e, #16a34a);
+color: #020617;
+box-shadow:
+0 0 12px rgba(34, 197, 94, 0.8),
+0 10px 26px rgba(0, 0, 0, 0.9);
+}
+
+.secondary-btn {
+background: radial-gradient(circle at 0 0, rgba(148, 163, 184, 0.16), #020617 60%);
+color: var(--text-main);
+box-shadow:
+0 0 0 1px #111827,
+inset 0 0 0 1px rgba(15, 23, 42, 0.9);
+}
+
+.danger-btn {
+background: linear-gradient(135deg, #7f1d1d, #b91c1c);
+color: #fee2e2;
+box-shadow:
+0 0 12px rgba(248, 113, 113, 0.7),
+0 10px 26px rgba(0, 0, 0, 0.9);
+}
+
+.primary-btn:disabled,
+.secondary-btn:disabled {
+opacity: 0.4;
+cursor: default;
+box-shadow: 0 0 0 1px #111827;
+}
+
+.message {
+margin-top: 6px;
+font-size: 11px;
+color: #fed7aa;
+text-transform: uppercase;
+letter-spacing: 0.14em;
+}
+
+.ranking-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 8px;
+font-size: 11px;
+text-transform: uppercase;
+letter-spacing: 0.16em;
+color: var(--text-muted);
+}
+
+.ranking-list {
+border-radius: 16px;
+background: #020617;
+border: 1px solid #0b1120;
+box-shadow:
+0 10px 32px rgba(0, 0, 0, 0.9),
+inset 0 0 0 1px rgba(15, 23, 42, 0.9);
+max-height: 430px;
+overflow-y: auto;
+position: relative;
+}
+.ranking-list::before {
+content: "";
+position: absolute;
+inset: 0;
+background-image: linear-gradient(
+180deg,
+rgba(15, 23, 42, 0.4) 0,
+rgba(15, 23, 42, 0.2) 50%,
+rgba(15, 23, 42, 0.4) 100%
+);
+mix-blend-mode: soft-light;
+pointer-events: none;
+opacity: 0.5;
+}
+
+.ranking-empty {
+padding: 28px 16px;
+text-align: center;
+font-size: 13px;
+color: var(--text-muted);
+}
+
+.ranking-item {
+display: grid;
+grid-template-columns: 40px 1fr auto;
+align-items: center;
+padding: 8px 14px;
+border-bottom: 1px solid rgba(15, 23, 42, 0.95);
+font-size: 13px;
+position: relative;
+z-index: 1;
+}
+.ranking-item:nth-child(odd) {
+background: rgba(15, 23, 42, 0.65);
+}
+.ranking-item:nth-child(even) {
+background: rgba(15, 23, 42, 0.4);
+}
+.rank-pos {
+font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+color: var(--accent-yellow);
+font-size: 12px;
+}
+.rank-left {
+display: flex;
+flex-direction: column;
+gap: 2px;
+}
+.rank-date {
+font-size: 11px;
+color: var(--text-muted);
+}
+.rank-total {
+font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+font-weight: 700;
+color: #bbf7d0;
+padding: 2px 10px;
+border-radius: 999px;
+background: radial-gradient(circle at 50% 0, rgba(22, 163, 74, 0.5), #022c22);
+box-shadow: 0 0 12px rgba(22, 163, 74, 0.7);
+min-width: 54px;
+text-align: right;
+}
+
+@media (max-width: 520px) {
+.top-header {
+padding-inline: 12px;
+}
+main {
+padding-inline: 8px;
+}
+.panel {
+border-radius: 16px;
+}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top-header">
+<div class="top-header-inner">
+<div class="totals-block">
+<div class="totals-row">
+<div class="total-label">Totale</div>
+<div class="total-display" id="totalDisplay">0</div>
+</div>
+<div class="throws-row">
+<span class="throws-label">Lanci</span>
+<span class="throws-value"><span id="countDisplay">0</span>/20</span>
+</div>
+</div>
+<div class="tabs">
+<button class="tab-btn active" id="tab-calc">Round</button>
+<button class="tab-btn" id="tab-rank">Leaderboard</button>
+</div>
+</div>
+</header>
+
+<main>
+<section class="panel" id="page-calc">
+<div class="panel-header">
+<div class="status-row">
+<div class="counter-line">
+<div class="counter">Sequenza: </div>
+</div>
+<div class="inputs-line" id="inputsLine">—</div>
+</div>
+<div class="limit-indicator limit-ok" id="limitIndicator">Online</div>
+</div>
+
+<div class="board-wrapper">
+<div class="board-rings"></div>
+<div class="grid" id="numbersGrid">
+<button class="num-btn" data-value="1">1</button>
+<button class="num-btn" data-value="2">2</button>
+<button class="num-btn" data-value="3">3</button>
+<button class="num-btn" data-value="4">4</button>
+<button class="num-btn" data-value="5">5</button>
+<button class="num-btn" data-value="6">6</button>
+<button class="num-btn" data-value="7">7</button>
+<button class="num-btn" data-value="8">8</button>
+<button class="num-btn" data-value="9">9</button>
+<button class="num-btn" data-value="0">0</button>
+<button class="ctrl-btn" id="undoBtn" title="Cancella ultimo">⌫</button>
+</div>
+</div>
+
+<div class="actions">
+<button class="primary-btn" id="saveAndResetBtn">Azzera e salva round</button>
+<button class="secondary-btn" id="resetOnlyBtn">Azzera senza salvare</button>
+</div>
+
+<div class="message" id="message"></div>
+</section>
+
+<section class="panel" id="page-rank" style="display:none;">
+<div class="ranking-header">
+<span>Leaderboard</span>
+<button class="danger-btn" id="clearRankingBtn">Clear board</button>
+</div>
+<div class="ranking-list" id="rankingList"></div>
+</section>
+</main>
+</div>
+
+<script>
+let total = 0;
+let count = 0;
+const maxInputs = 20;
+let inputsHistory = [];
+
+const totalDisplay = document.getElementById("totalDisplay");
+const countDisplay = document.getElementById("countDisplay");
+const limitIndicator = document.getElementById("limitIndicator");
+const numbersGrid = document.getElementById("numbersGrid");
+const messageEl = document.getElementById("message");
+const inputsLine = document.getElementById("inputsLine");
+const undoBtn = document.getElementById("undoBtn");
+
+const saveAndResetBtn = document.getElementById("saveAndResetBtn");
+const resetOnlyBtn = document.getElementById("resetOnlyBtn");
+
+const tabCalc = document.getElementById("tab-calc");
+const tabRank = document.getElementById("tab-rank");
+const pageCalc = document.getElementById("page-calc");
+const pageRank = document.getElementById("page-rank");
+const rankingList = document.getElementById("rankingList");
+const clearRankingBtn = document.getElementById("clearRankingBtn");
+
+const STORAGE_KEY = "sumRanking_darts";
+
+function updateInputsLine() {
+if (inputsHistory.length === 0) {
+inputsLine.textContent = "—";
+} else {
+inputsLine.textContent = inputsHistory.join(" ");
+}
+}
+
+function updateUI() {
+totalDisplay.textContent = total;
+countDisplay.textContent = count;
+updateInputsLine();
+
+if (count >= maxInputs) {
+limitIndicator.textContent = "Limit";
+limitIndicator.classList.remove("limit-ok");
+limitIndicator.classList.add("limit-full");
+setButtonsDisabled(true);
+messageEl.textContent = "20 lanci registrati. Salva il round o azzera per continuare.";
+} else {
+limitIndicator.textContent = "Online";
+limitIndicator.classList.add("limit-ok");
+limitIndicator.classList.remove("limit-full");
+setButtonsDisabled(false);
+messageEl.textContent = "";
+}
+
+undoBtn.classList.toggle("disabled", inputsHistory.length === 0);
+}
+
+function setButtonsDisabled(disabled) {
+const btns = numbersGrid.querySelectorAll(".num-btn");
+btns.forEach(btn => {
+if (disabled) {
+btn.classList.add("disabled");
+} else {
+btn.classList.remove("disabled");
+}
+});
+if (disabled) {
+undoBtn.classList.add("disabled");
+} else if (inputsHistory.length > 0) {
+undoBtn.classList.remove("disabled");
+}
+}
+
+function resetCalculation(save = false) {
+if (save && (count > 0 || total !== 0)) {
+saveCurrentTotal();
+}
+total = 0;
+count = 0;
+inputsHistory = [];
+updateUI();
+if (save) renderRanking();
+}
+
+function handleNumberClick(value) {
+if (count >= maxInputs) return;
+total += value;
+count += 1;
+inputsHistory.push(value);
+updateUI();
+}
+
+function handleUndo() {
+if (inputsHistory.length === 0) return;
+const last = inputsHistory.pop();
+total -= last;
+if (total < 0) total = 0;
+count = Math.max(0, count - 1);
+updateUI();
+}
+
+function loadRanking() {
+const raw = localStorage.getItem(STORAGE_KEY);
+if (!raw) return [];
+try {
+const arr = JSON.parse(raw);
+return Array.isArray(arr) ? arr : [];
+} catch {
+return [];
+}
+}
+
+function saveRanking(arr) {
+localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+}
+
+function saveCurrentTotal() {
+const arr = loadRanking();
+const entry = {
+total,
+timestamp: Date.now()
+};
+arr.unshift(entry);
+saveRanking(arr);
+}
+
+function formatDate(timestamp) {
+const d = new Date(timestamp);
+const day = String(d.getDate()).padStart(2, "0");
+const month = String(d.getMonth() + 1).padStart(2, "0");
+const year = d.getFullYear();
+const hours = String(d.getHours()).padStart(2, "0");
+const mins = String(d.getMinutes()).padStart(2, "0");
+const secs = String(d.getSeconds()).padStart(2, "0");
+return `${day}/${month}/${year} ${hours}:${mins}:${secs}`;
+}
+
+function renderRanking() {
+const arr = loadRanking();
+rankingList.innerHTML = "";
+
+if (arr.length === 0) {
+const empty = document.createElement("div");
+empty.className = "ranking-empty";
+empty.textContent = "Nessun round salvato.";
+rankingList.appendChild(empty);
+return;
+}
+
+arr.forEach((entry, index) => {
+const row = document.createElement("div");
+row.className = "ranking-item";
+
+const pos = document.createElement("div");
+pos.className = "rank-pos";
+pos.textContent = `#${index + 1}`;
+
+const left = document.createElement("div");
+left.className = "rank-left";
+
+const label = document.createElement("div");
+label.textContent = "Round salvato";
+
+const date = document.createElement("div");
+date.className = "rank-date";
+date.textContent = formatDate(entry.timestamp);
+
+left.appendChild(label);
+left.appendChild(date);
+
+const right = document.createElement("div");
+right.className = "rank-total";
+right.textContent = entry.total;
+
+row.appendChild(pos);
+row.appendChild(left);
+row.appendChild(right);
+
+rankingList.appendChild(row);
+});
+}
+
+numbersGrid.addEventListener("click", (e) => {
+const btn = e.target.closest("button");
+if (!btn || btn.classList.contains("disabled")) return;
+
+if (btn === undoBtn) {
+handleUndo();
+return;
+}
+
+if (btn.classList.contains("num-btn")) {
+const value = parseInt(btn.dataset.value, 10);
+handleNumberClick(value);
+}
+});
+
+saveAndResetBtn.addEventListener("click", () => {
+resetCalculation(true);
+});
+
+resetOnlyBtn.addEventListener("click", () => {
+resetCalculation(false);
+});
+
+clearRankingBtn.addEventListener("click", () => {
+if (confirm("Svuotare la leaderboard?")) {
+localStorage.removeItem(STORAGE_KEY);
+renderRanking();
+}
+});
+
+tabCalc.addEventListener("click", () => {
+tabCalc.classList.add("active");
+tabRank.classList.remove("active");
+pageCalc.style.display = "";
+pageRank.style.display = "none";
+});
+
+tabRank.addEventListener("click", () => {
+tabRank.classList.add("active");
+tabCalc.classList.remove("active");
+pageCalc.style.display = "none";
+pageRank.style.display = "";
+renderRanking();
+});
+
+updateUI();
+renderRanking();
+</script>
+</body>
+</html>
